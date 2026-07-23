@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Compute club standings + season evolution from the per-event club data and
 render a single self-contained static HTML dashboard. Parametric scoring."""
-import json, csv, re, unicodedata
+import json, csv, re, unicodedata, datetime
 from collections import defaultdict
 
-TODAY = '15/06/2026'
+_today = datetime.date.today()
+TODAY = _today.strftime('%d/%m/%Y')          # shown as "Posição em ..."
+TODAY_DK = (_today.month, _today.day)         # for clamping future month-end dates
 MY_CLUB = 'STAH'
 
 # ----- parametric scoring (scenario a by default) -----
@@ -36,6 +38,9 @@ def to_float(s):
 def date_key(dmy):                    # "DD/MM" -> (mm, dd)
     d, m = dmy.split('/')[:2]
     return (int(m), int(d))
+
+def clamp_dk(dk):                     # ongoing monthly etapas end at month-end (future);
+    return min(dk, TODAY_DK)          # pin those to today so snapshots never go past today
 
 gmap = json.load(open('group_map.json', encoding='utf-8'))
 
@@ -71,7 +76,7 @@ with open('data_valid_2026.csv', encoding='utf-8') as f:
         if tt is None:
             continue
         rows.append({
-            'eid': r['eid'], 'end': r['end_date'], 'dk': date_key(r['end_date']),
+            'eid': r['eid'], 'end': r['end_date'], 'dk': clamp_dk(date_key(r['end_date'])),
             'stage': r['stage_type'], 'discipline': r['discipline'],
             'group': group_of(r['discipline']), 'club': r['club'], 'tt': tt,
         })
