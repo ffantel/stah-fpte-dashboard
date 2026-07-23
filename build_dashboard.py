@@ -28,8 +28,11 @@ def to_float(s):
     s = (s or '').strip()
     if not s:
         return None
-    if ',' in s:                      # pt-BR: dot=thousands, comma=decimal
+    if ',' in s:                                  # pt-BR: dot=thousands, comma=decimal
         s = s.replace('.', '').replace(',', '.')
+    elif re.fullmatch(r'\d{1,3}(\.\d{3})+', s):   # dot=thousands, no decimals e.g. "1.740"
+        s = s.replace('.', '')
+    # else: a lone dot is the decimal separator (e.g. "906.31") or it's a plain int
     try:
         return float(s)
     except ValueError:
