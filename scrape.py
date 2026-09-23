@@ -20,10 +20,16 @@ def norm(s):
     return re.sub(r'\s+', ' ', s).strip().lower()
 
 def get(url, tries=3):
+    """Fetch a page's text, respecting whatever charset the server actually declares.
+    The site used to be ISO-8859-1 and is UTF-8 as of 2026-09; hardcoding either one
+    corrupts accented names the moment the site changes again (confirmed: it already
+    did). If the response has no declared charset at all, fall back to content-sniffing
+    instead of blindly assuming an encoding."""
     for i in range(tries):
         try:
             r = requests.get(url, headers=H, timeout=40)
-            r.encoding = 'ISO-8859-1'
+            if 'charset=' not in r.headers.get('Content-Type', '').lower():
+                r.encoding = r.apparent_encoding
             return r.text
         except Exception:
             if i == tries - 1:
